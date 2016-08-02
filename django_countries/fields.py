@@ -39,6 +39,8 @@ class Country(object):
 
     def __init__(self, code, flag_url=None, str_attr='code'):
         self.code = code
+        if isinstance(self.code, basestring):
+            self.code = self.code.upper()
         self.flag_url = flag_url
         self._escape = False
         self._str_attr = str_attr
@@ -200,6 +202,24 @@ class LazyTypedChoiceField(widgets.LazyChoicesMixin, forms.TypedChoiceField):
         super(LazyTypedChoiceField, self)._set_choices(value)
         self.widget.choices = value
 
+    def lower(self, string):
+        if isinstance(string, basestring):
+            return string.lower()
+        return string
+
+    def valid_value(self, value):
+        "Check to see if the provided value is a valid choice"
+        text_value = force_text(value)
+        for k, v in self.choices:
+            if isinstance(v, (list, tuple)):
+                # This is an optgroup, so look inside the group for options
+                for k2, v2 in v:
+                    if self.lower(value) == self.lower(k2) or self.lower(text_value) == self.lower(force_text(k2)):
+                        return True
+            else:
+                if self.lower(value) == self.lower(k) or self.lower(text_value) == self.lower(force_text(k)):
+                    return True
+        return False
 
 class CountryField(CharField):
     """
